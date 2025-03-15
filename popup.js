@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   async function displayResults(result) {
-    console.log('Displaying result:', result); // Debug log
+    console.log('Displaying result:', result);
     try {
       // Handle the result based on its type
       if (typeof result === 'string') {
@@ -57,29 +57,11 @@ document.addEventListener('DOMContentLoaded', function() {
         console.warn('Empty text result received');
       }
 
-      // Show processing state
-      languageText.textContent = 'Detecting language...';
-      
-      // Detect language and translate if needed
-      const translationResult = await detectAndTranslate(currentText);
-      
-      // Update language display
-      languageText.textContent = `Detected Language: ${translationResult.detectedLanguage}`;
-      
-      // Handle translation if needed
-      if (translationResult.detectedLanguage.toLowerCase() !== 'english') {
-        translationContainer.style.display = 'block';
-        translatedResult.value = translationResult.translatedText;
-        copyTranslationBtn.style.display = 'inline-block';
-        copyTranslationBtn.disabled = false;
-      } else {
-        translationContainer.style.display = 'none';
-        copyTranslationBtn.style.display = 'none';
-      }
+      // Remove automatic translation and language detection
+      languageText.textContent = 'Click translate to detect language and translate';
       
     } catch (error) {
       console.error('Display error:', error);
-      // Only show error if we actually failed to display the text
       if (!originalResult.value) {
         errorMessage.textContent = 'Failed to display text. Please try again.';
         errorMessage.classList.remove('hidden');
@@ -105,19 +87,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Translation button handler
+  // Translation button handler - updated
   translateBtn.addEventListener('click', async () => {
     if (!currentText) return;
     
     try {
       translateBtn.disabled = true;
       translateBtn.textContent = 'Translating...';
+      languageText.textContent = 'Detecting language...';
       
       const translationResult = await detectAndTranslate(currentText);
       
-      translationContainer.style.display = 'block';
-      translatedResult.value = translationResult.translatedText;
-      copyTranslationBtn.disabled = false;
+      // Update language display
+      languageText.textContent = `Detected Language: ${translationResult.detectedLanguage}`;
+      
+      // Show translation container and update text only if not English
+      if (translationResult.detectedLanguage.toLowerCase() !== 'english') {
+        translationContainer.style.display = 'block';
+        translatedResult.value = translationResult.translatedText;
+        copyTranslationBtn.style.display = 'inline-block';
+        copyTranslationBtn.disabled = false;
+      } else {
+        translationContainer.style.display = 'none';
+        copyTranslationBtn.style.display = 'none';
+        languageText.textContent = 'Detected Language: English - No translation needed';
+      }
       
       errorMessage.classList.add('hidden');
     } catch (error) {
