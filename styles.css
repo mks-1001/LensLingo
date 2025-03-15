@@ -5,9 +5,15 @@
 
 .drop-zone {
   border: 2px dashed #ccc;
+  border-radius: 4px;
   padding: 20px;
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  min-height: 150px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .drop-zone.dragover {
@@ -117,4 +123,20 @@ textarea {
 #translate-btn {
   padding: 5px 10px;
   font-size: 14px;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+}
+
+.upload-prompt {
+  width: 100%;
+}
+
+/* When image is shown, adjust the drop zone styling */
+.drop-zone.has-image {
+  border-style: solid;
+  background-color: #f8f9fa;
 } 

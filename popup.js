@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const errorMessage = document.getElementById('error-message');
   const languageText = document.getElementById('language-text');
   const translationContainer = document.getElementById('translation-container');
+  const previewImage = document.getElementById('preview-image');
+  const uploadPrompt = document.querySelector('.upload-prompt');
   
   let currentText = '';
 
@@ -73,11 +75,19 @@ document.addEventListener('DOMContentLoaded', function() {
   fileInput.addEventListener('change', handleFileSelect);
 
   function handleFileSelect(event) {
-    const file = event.target.files[0];
+    const file = event.target.files ? event.target.files[0] : event.dataTransfer.files[0];
     if (file) {
       const reader = new FileReader();
+      
+      // Show image preview
       reader.onload = function(e) {
-        const imageData = e.target.result.split(',')[1]; // Get base64 data
+        previewImage.src = e.target.result;
+        previewImage.classList.remove('hidden');
+        uploadPrompt.classList.add('hidden');
+        dropZone.classList.add('has-image');
+        
+        // Send base64 data for OCR processing
+        const imageData = e.target.result.split(',')[1];
         chrome.runtime.sendMessage({
           action: 'processImage',
           imageData: imageData
@@ -143,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 2000);
   });
 
-  // Drag and drop handling
+  // Update drop zone handling
   dropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
     dropZone.classList.add('dragover');
@@ -156,7 +166,19 @@ document.addEventListener('DOMContentLoaded', function() {
   dropZone.addEventListener('drop', (e) => {
     e.preventDefault();
     dropZone.classList.remove('dragover');
-    const file = e.dataTransfer.files[0];
     handleFileSelect(e);
+  });
+
+  // Add click handler to allow replacing the image
+  dropZone.addEventListener('click', () => {
+    if (previewImage.classList.contains('hidden')) return;
+    fileInput.click();
+  });
+
+  // Reset the upload area when starting new upload
+  fileInput.addEventListener('click', () => {
+    previewImage.classList.add('hidden');
+    uploadPrompt.classList.remove('hidden');
+    dropZone.classList.remove('has-image');
   });
 }); 
