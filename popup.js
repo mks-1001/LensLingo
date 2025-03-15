@@ -19,32 +19,27 @@ document.addEventListener('DOMContentLoaded', function() {
   
   let currentText = '';
 
-  // Check for both OCR results and image preview when popup loads
-  console.log('Checking for OCR results and image preview...');
-  chrome.storage.local.get(['ocrResult', 'imagePreview'], function(data) {
-    console.log('Storage data:', data);
-    
-    // Display image preview if available
+  // Check for OCR results and image preview when popup loads
+  chrome.storage.local.get(['ocrResult', 'ocrError', 'imagePreview', 'ocrImageData', 'pendingImageUrl'], function(data) {
     if (data.imagePreview) {
-      console.log('Found image preview');
       displayImagePreview(data.imagePreview);
-      // Clear the image preview from storage
-      chrome.storage.local.remove('imagePreview');
     }
     
     if (data.ocrResult) {
-      console.log('Found OCR result:', data.ocrResult);
       displayResults(data.ocrResult);
-      // Clear the result from storage after displaying
-      chrome.storage.local.remove('ocrResult');
+      // Clear the stored result
+      chrome.storage.local.remove(['ocrResult', 'ocrImageData']);
     }
-  });
-
-  // Check for pending image URL (from context menu)
-  chrome.storage.local.get(['pendingImageUrl'], function(data) {
+    
+    if (data.ocrError) {
+      errorMessage.textContent = data.ocrError;
+      errorMessage.classList.remove('hidden');
+      // Clear the stored error
+      chrome.storage.local.remove(['ocrError', 'ocrImageData']);
+    }
+    
     if (data.pendingImageUrl) {
-      displayImagePreview(data.pendingImageUrl);
-      // Process the image
+      // Handle context menu image
       fetch(data.pendingImageUrl)
         .then(response => response.blob())
         .then(blob => {
@@ -136,27 +131,13 @@ document.addEventListener('DOMContentLoaded', function() {
   fileInput.addEventListener('change', handleFileSelect);
 
   function handleFileSelect(event) {
+    event.preventDefault();
     const file = event.target.files ? event.target.files[0] : event.dataTransfer.files[0];
     if (file) {
-      // Clear previous results
-      originalResult.value = '';
-      translatedResult.value = '';
-      languageText.textContent = '';
-      translationContainer.style.display = 'none';
-      errorMessage.classList.add('hidden');
-      
-      // Reset buttons
-      copyOriginalBtn.disabled = true;
-      translateBtn.disabled = true;
-      copyTranslationBtn.disabled = true;
-
       const reader = new FileReader();
-      
       reader.onload = function(e) {
-        displayImagePreview(e.target.result);
-        
-        // Send base64 data for OCR processing
         const imageData = e.target.result.split(',')[1];
+        // Send to background script for processing
         chrome.runtime.sendMessage({
           action: 'processImage',
           imageData: imageData,

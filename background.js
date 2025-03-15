@@ -2,6 +2,21 @@ import { performGeminiVisionOCR } from './generative-ai.js';
 
 console.log('Background script loaded');
 
+function openPopupWindow(imageData, imageUrl) {
+  chrome.windows.create({
+    url: 'popup.html',
+    type: 'popup',
+    width: 400,
+    height: 600
+  }, (window) => {
+    // Store the data for the new popup
+    chrome.storage.local.set({
+      'ocrImageData': imageData,
+      'imagePreview': imageUrl
+    });
+  });
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Background script received message:', request);
   
@@ -15,21 +30,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Processing image in background:', request.imageData);
     performGeminiVisionOCR(request.imageData)
       .then(result => {
-        console.log('OCR Result:', result);
-        // Send the result directly back to the popup
-        chrome.runtime.sendMessage({
-          action: 'ocrResult',
-          result: result,
-          imageData: request.imageUrl || request.imageData
+        // Store result and open new popup
+        chrome.storage.local.set({
+          'ocrResult': result,
+          'ocrImageData': request.imageData,
+          'imagePreview': request.imageUrl
+        }, () => {
+          openPopupWindow(request.imageData, request.imageUrl);
         });
       })
       .catch(error => {
         console.error('OCR Error:', error);
-        chrome.runtime.sendMessage({
-          action: 'ocrError',
-          error: error.message
+        chrome.storage.local.set({
+          'ocrError': error.message,
+          'ocrImageData': request.imageData,
+          'imagePreview': request.imageUrl
+        }, () => {
+          openPopupWindow(request.imageData, request.imageUrl);
         });
       });
+    return true;
   }
   
   return true;
@@ -55,7 +75,6 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       width: 400,
       height: 600
     }, (window) => {
-      // Store the image URL temporarily
       chrome.storage.local.set({ 
         'pendingImageUrl': info.srcUrl 
       });
