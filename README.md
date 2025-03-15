@@ -1,4 +1,4 @@
-# Image Text Extractor Chrome Extension
+# LensLingo
 
 A Chrome extension that extracts text from images using Google's Generative AI Vision capabilities. It supports multiple languages and provides automatic translation to English for non-English text.
 
