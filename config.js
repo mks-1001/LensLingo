@@ -1,5 +1,5 @@
 export const config = {
-  GEMINI_API_KEY: 'AIzaSyCXJLLAQC-07E6AgLkPiPydHSLMkwiy2z8',
+  GEMINI_API_KEY: '<YOUR_GEMINI_API_KEY>',
   MODEL_CONFIG: {
     model: "gemini-2.0-flash",
     generationConfig: {
