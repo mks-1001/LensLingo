@@ -16,27 +16,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     performGeminiVisionOCR(request.imageData)
       .then(result => {
         console.log('OCR Result:', result);
-        chrome.storage.local.set({
-          'ocrResult': result,
-          'imagePreview': request.imageUrl || request.imageData // Store the image data
-        }, () => {
-          if (chrome.runtime.lastError) {
-            console.error('Storage error:', chrome.runtime.lastError);
-          } else {
-            console.log('Result saved to storage');
-            chrome.windows.create({
-              url: 'popup.html',
-              type: 'popup',
-              width: 400,
-              height: 600
-            });
-          }
+        // Send the result directly back to the popup
+        chrome.runtime.sendMessage({
+          action: 'ocrResult',
+          result: result,
+          imageData: request.imageUrl || request.imageData
         });
       })
       .catch(error => {
         console.error('OCR Error:', error);
-        chrome.storage.local.set({
-          'ocrError': error.message
+        chrome.runtime.sendMessage({
+          action: 'ocrError',
+          error: error.message
         });
       });
   }
@@ -54,19 +45,19 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+// Update context menu handler
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   console.log('Context menu clicked:', info);
   if (info.menuItemId === 'extractText') {
-    console.log('Sending message to content script');
-    // Store the image URL directly
-    chrome.storage.local.set({ 'imagePreview': info.srcUrl }, () => {
-      chrome.tabs.sendMessage(tab.id, {
-        action: 'extractText',
-        imageUrl: info.srcUrl
-      }, (response) => {
-        if (chrome.runtime.lastError) {
-          console.error('Error sending message:', chrome.runtime.lastError);
-        }
+    chrome.windows.create({
+      url: 'popup.html',
+      type: 'popup',
+      width: 400,
+      height: 600
+    }, (window) => {
+      // Store the image URL temporarily
+      chrome.storage.local.set({ 
+        'pendingImageUrl': info.srcUrl 
       });
     });
   }

@@ -40,6 +40,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  // Check for pending image URL (from context menu)
+  chrome.storage.local.get(['pendingImageUrl'], function(data) {
+    if (data.pendingImageUrl) {
+      displayImagePreview(data.pendingImageUrl);
+      // Process the image
+      fetch(data.pendingImageUrl)
+        .then(response => response.blob())
+        .then(blob => {
+          const reader = new FileReader();
+          reader.onloadend = function() {
+            const base64data = reader.result.split(',')[1];
+            chrome.runtime.sendMessage({
+              action: 'processImage',
+              imageData: base64data,
+              imageUrl: data.pendingImageUrl
+            });
+          };
+          reader.readAsDataURL(blob);
+        });
+      // Clear the pending URL
+      chrome.storage.local.remove('pendingImageUrl');
+    }
+  });
+
+  // Listen for OCR results
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'ocrResult') {
+      displayImagePreview(message.imageData);
+      displayResults(message.result);
+    } else if (message.action === 'ocrError') {
+      errorMessage.textContent = message.error;
+      errorMessage.classList.remove('hidden');
+    }
+  });
+
   async function displayResults(result) {
     console.log('Displaying result:', result);
     try {
@@ -113,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
         chrome.runtime.sendMessage({
           action: 'processImage',
           imageData: imageData,
-          imageUrl: e.target.result // Store the full data URL
+          imageUrl: e.target.result
         });
       };
       reader.readAsDataURL(file);
