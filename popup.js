@@ -19,12 +19,21 @@ document.addEventListener('DOMContentLoaded', function() {
   
   let currentText = '';
 
-  // Check for OCR results as soon as popup loads
-  console.log('Checking for OCR results...'); // Debug log
-  chrome.storage.local.get(['ocrResult'], function(data) {
-    console.log('Storage data:', data); // Debug log
+  // Check for both OCR results and image preview when popup loads
+  console.log('Checking for OCR results and image preview...');
+  chrome.storage.local.get(['ocrResult', 'imagePreview'], function(data) {
+    console.log('Storage data:', data);
+    
+    // Display image preview if available
+    if (data.imagePreview) {
+      console.log('Found image preview');
+      displayImagePreview(data.imagePreview);
+      // Clear the image preview from storage
+      chrome.storage.local.remove('imagePreview');
+    }
+    
     if (data.ocrResult) {
-      console.log('Found OCR result:', data.ocrResult); // Debug log
+      console.log('Found OCR result:', data.ocrResult);
       displayResults(data.ocrResult);
       // Clear the result from storage after displaying
       chrome.storage.local.remove('ocrResult');
@@ -71,6 +80,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  function displayImagePreview(imageSource) {
+    // If imageSource is a base64 string and doesn't start with data:image
+    if (imageSource.startsWith('http') || imageSource.startsWith('data:image')) {
+      previewImage.src = imageSource;
+    } else {
+      previewImage.src = `data:image/png;base64,${imageSource}`;
+    }
+    
+    previewImage.classList.remove('hidden');
+    uploadPrompt.classList.add('hidden');
+    dropZone.classList.add('has-image');
+    
+    // Add click handler to allow replacing the image
+    dropZone.style.cursor = 'pointer';
+    dropZone.title = 'Click to upload a new image';
+  }
+
   // File input handler
   fileInput.addEventListener('change', handleFileSelect);
 
@@ -79,18 +105,15 @@ document.addEventListener('DOMContentLoaded', function() {
     if (file) {
       const reader = new FileReader();
       
-      // Show image preview
       reader.onload = function(e) {
-        previewImage.src = e.target.result;
-        previewImage.classList.remove('hidden');
-        uploadPrompt.classList.add('hidden');
-        dropZone.classList.add('has-image');
+        displayImagePreview(e.target.result);
         
         // Send base64 data for OCR processing
         const imageData = e.target.result.split(',')[1];
         chrome.runtime.sendMessage({
           action: 'processImage',
-          imageData: imageData
+          imageData: imageData,
+          imageUrl: e.target.result // Store the full data URL
         });
       };
       reader.readAsDataURL(file);

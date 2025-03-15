@@ -15,9 +15,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Processing image in background:', request.imageData);
     performGeminiVisionOCR(request.imageData)
       .then(result => {
-        console.log('OCR Result:', result); // Debug log
+        console.log('OCR Result:', result);
         chrome.storage.local.set({
-          'ocrResult': result
+          'ocrResult': result,
+          'imagePreview': request.imageUrl || request.imageData // Store the image data
         }, () => {
           if (chrome.runtime.lastError) {
             console.error('Storage error:', chrome.runtime.lastError);
@@ -57,13 +58,16 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   console.log('Context menu clicked:', info);
   if (info.menuItemId === 'extractText') {
     console.log('Sending message to content script');
-    chrome.tabs.sendMessage(tab.id, {
-      action: 'extractText',
-      imageUrl: info.srcUrl
-    }, (response) => {
-      if (chrome.runtime.lastError) {
-        console.error('Error sending message:', chrome.runtime.lastError);
-      }
+    // Store the image URL directly
+    chrome.storage.local.set({ 'imagePreview': info.srcUrl }, () => {
+      chrome.tabs.sendMessage(tab.id, {
+        action: 'extractText',
+        imageUrl: info.srcUrl
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('Error sending message:', chrome.runtime.lastError);
+        }
+      });
     });
   }
 }); 
