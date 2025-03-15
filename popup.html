@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Text Extractor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div id="drop-zone" class="drop-zone">
+      <p>Drop image here or</p>
+      <input type="file" id="file-input" accept="image/*">
+      <label for="file-input" class="upload-btn">Choose File</label>
+    </div>
+    
+    <button id="start-ocr" class="button" disabled>Start OCR</button>
+    
+    <div class="result-container">
+      <div class="text-container">
+        <h3>Original Text:</h3>
+        <p id="language-text"></p>
+        <textarea id="original-result" readonly placeholder="Extracted text will appear here..."></textarea>
+        <div class="button-container">
+          <button id="copy-original" class="button" disabled>Copy Text</button>
+          <button id="translate-btn" class="button" disabled>Translate</button>
+        </div>
+      </div>
+      
+      <div class="text-container" id="translation-container" style="display: none;">
+        <h3>English Translation:</h3>
+        <textarea id="translated-result" readonly placeholder="Translation will appear here..."></textarea>
+        <button id="copy-translation" class="button">Copy Translation</button>
+      </div>
+    </div>
+    
+    <div id="error-message" class="error hidden"></div>
+  </div>
+  <script src="dist/popup.bundle.js"></script>
+</body>
+</html> 
