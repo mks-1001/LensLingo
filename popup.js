@@ -138,6 +138,18 @@ document.addEventListener('DOMContentLoaded', function() {
   function handleFileSelect(event) {
     const file = event.target.files ? event.target.files[0] : event.dataTransfer.files[0];
     if (file) {
+      // Clear previous results
+      originalResult.value = '';
+      translatedResult.value = '';
+      languageText.textContent = '';
+      translationContainer.style.display = 'none';
+      errorMessage.classList.add('hidden');
+      
+      // Reset buttons
+      copyOriginalBtn.disabled = true;
+      translateBtn.disabled = true;
+      copyTranslationBtn.disabled = true;
+
       const reader = new FileReader();
       
       reader.onload = function(e) {
@@ -154,6 +166,26 @@ document.addEventListener('DOMContentLoaded', function() {
       reader.readAsDataURL(file);
     }
   }
+
+  // Reset function for reuse
+  function resetUI() {
+    originalResult.value = '';
+    translatedResult.value = '';
+    languageText.textContent = '';
+    translationContainer.style.display = 'none';
+    errorMessage.classList.add('hidden');
+    copyOriginalBtn.disabled = true;
+    translateBtn.disabled = true;
+    copyTranslationBtn.disabled = true;
+  }
+
+  // Update file input click handler
+  fileInput.addEventListener('click', () => {
+    previewImage.classList.add('hidden');
+    uploadPrompt.classList.remove('hidden');
+    dropZone.classList.remove('has-image');
+    resetUI();
+  });
 
   // Translation button handler - updated
   translateBtn.addEventListener('click', async () => {
@@ -231,12 +263,5 @@ document.addEventListener('DOMContentLoaded', function() {
   dropZone.addEventListener('click', () => {
     if (previewImage.classList.contains('hidden')) return;
     fileInput.click();
-  });
-
-  // Reset the upload area when starting new upload
-  fileInput.addEventListener('click', () => {
-    previewImage.classList.add('hidden');
-    uploadPrompt.classList.remove('hidden');
-    dropZone.classList.remove('has-image');
   });
 }); 
